@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import glob
+import os
+from constants import sentiment_dict
 from llm_label_flow import llm_component
 from sklearn.metrics import classification_report, matthews_corrcoef
 
@@ -81,6 +83,7 @@ def run_llm_label_flow_gemini(label_dict, query, labels, data, label_name='llm_l
         Returns:
         - df: The original dataframe with the LLM labels appended.
         """
+    print(f"Starting gemini for {query} and {labels}")
 
     df = data.copy()
     df_dict = {'uid': list(df['uid']), 'text': list(df['text'])}
@@ -301,7 +304,7 @@ def load_in_data_manual_export(query):
     Returns:
     - df (pd.DataFrame): The dataframe containing the data for the query.
     """
-    dir1 = f'/Users/christiannaclark/project-google-arxr-analytics/data/{query}/*.csv'
+    dir1 = f'/Users/pvacca/git/project-google-arxr-analytics/data/{query}/*.csv'
     paths = glob.glob(dir1)
     data_list = []
     for path in paths:
@@ -314,7 +317,7 @@ def load_in_data_manual_export(query):
     return df
 
 def load_in_data_reddit(query):
-    dir2 = f'/Users/christiannaclark/project-google-arxr-analytics/data/reddit/{query}_*.json'
+    dir2 = f'/Users/pvacca/git/project-google-arxr-analytics/data/reddit/{query}_*.json'
     paths = glob.glob(dir2)
     data_list = []
     for path in paths:
@@ -326,12 +329,82 @@ def load_in_data_reddit(query):
     df['source'] = 'reddit'
     return df
 
+def rename_files(tag):
+    file_paths = glob.glob(f"../data/{tag}/*.csv")
+    for file in file_paths:
+        os.system(f" mv {file} {file.replace(tag.title()+'_','').lower()}")
+
 def load_in_data(query):
     manual_export_data = load_in_data_manual_export(query)
-    reddit_data = load_in_data_reddit(query)
-    df = pd.concat([manual_export_data,reddit_data]).reset_index(drop=True)
+    #reddit_data = load_in_data_reddit(query)
+    df = pd.concat([manual_export_data]).reset_index(drop=True)
     df['text'] =  df.apply(lambda x: x.Title+x.text if type(x.Title)==str and x['Page Type']=='news' else x.text,axis=1)
     return df
+
+def combine_results_data(all_data,exclude_ids,results_df):
+    data_excluded = all_data.loc[all_data['uid'].isin(exclude_ids)].reset_index(drop=True)
+    text_map = {text:label for text,label in zip(results_df['text'],results_df['llm_label'])}
+    data_excluded['llm_label'] = data_excluded['text'].apply(lambda x: text_map[x] if x in text_map.keys() else None).reset_index(drop=True)
+    data_excluded = data_excluded.loc[~data_excluded['llm_label'].isna()].reset_index(drop=True)
+    all_results = pd.concat([results_df,data_excluded]).reset_index(drop=True)
+    return all_results
+
+
+def make_preds(query,tag):
+    # Load in main data
+    main_query_data = load_in_data(query)
+    
+    # Load in sampled data
+    all_data, unique_text_data, excluded_uid_data, train_data, test_data = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
+    
+    # Condition for sample 
+    if len(train_data)>5000:
+        train_data = train_data.sample(n=5000,random_state=42)
+        
+    # Create prompt and make preds
+    prompt = generate_prompt(query.title(), tag.title())
+    results = run_llm_label_flow_gemini(sentiment_dict, prompt, list(sentiment_dict.keys()), train_data, label_name='llm_label')
+    
+    print(f'The label distribution for {query} {tag} is: \n with singular results')
+    print(results['llm_label'].value_counts()/len(results))
+    
+    # Combine text to label 
+    all_results = combine_results_data(all_data,excluded_uid_data,results)
+    
+    print(f'The label distribution for {query} {tag} is: \n with all results')
+    print(all_results['llm_label'].value_counts()/len(all_results))
+    
+    # Save data
+    all_results.to_json(f'../data/predictions/{query}/{tag}.json',orient='records',lines=True)
+    print('Complete')
+
+def make_preds_categories(query,tag):
+    # Load in main data
+    main_query_data = load_in_data(query)
+    
+    # Load in sampled data
+    all_data, unique_text_data, excluded_uid_data, train_data, test_data = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
+    
+    # Condition for sample 
+    if len(train_data)>5000:
+        train_data = train_data.sample(n=5000,random_state=42)
+        
+    # Create prompt and make preds
+    prompt = generate_prompt_categories(tag.title())
+    results = run_llm_label_flow_gemini(sentiment_dict, prompt, list(sentiment_dict.keys()), train_data, label_name='llm_label')
+    
+    print(f'The label distribution for {query} {tag} is: \n with singular results')
+    print(results['llm_label'].value_counts()/len(results))
+    
+    # Combine text to label 
+    all_results = combine_results_data(all_data,excluded_uid_data,results)
+    
+    print(f'The label distribution for {query} {tag} is: \n with all results')
+    print(all_results['llm_label'].value_counts()/len(all_results))
+    
+    # Save data
+    all_results.to_json(f'../data/predictions/{query}/{tag}.json',orient='records',lines=True)
+    print('Complete')
 
 
 def grab_specific_tag_data_breakdown_test_and_train(df,tag):
