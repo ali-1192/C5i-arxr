@@ -11,7 +11,7 @@ category_tags =  ['amazon', 'apple', 'google', 'meta', 'microsoft']
 query_tags = {'glasses': glasses_tags, 'headsets': headset_tags, 'category': category_tags}
 
 sentiment_dict = {
-    'neutral': 0, 
-    'negative': -1,
-    'positive':1
+    'neutral': 1, 
+    'negative': 0,
+    'positive':2
 }
