@@ -355,7 +355,7 @@ def make_preds(query,tag):
     main_query_data = load_in_data(query)
     
     # Load in sampled data
-    all_data, unique_text_data, excluded_uid_data, train_data, test_data = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
+    all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
 
     # Condition for sample 
     if len(train_data)>5000:
@@ -375,7 +375,7 @@ def make_preds(query,tag):
     print(all_results['llm_label'].value_counts()/len(all_results))
     
     # Save data
-    all_results.to_json(f'../data/predictions/{query}/{tag}2.json',orient='records',lines=True)
+    all_results.to_json(f'../data/predictions/{query}/{tag}.json',orient='records',lines=True)
     print('Complete')
 
 def make_preds_categories(query,tag):
@@ -383,7 +383,7 @@ def make_preds_categories(query,tag):
     main_query_data = load_in_data(query)
     
     # Load in sampled data
-    all_data, unique_text_data, excluded_uid_data, train_data, test_data = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
+    all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
     
     # Condition for sample 
     if len(train_data)>5000:
