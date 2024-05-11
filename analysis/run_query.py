@@ -1,20 +1,32 @@
-#!/Users/pvacca/.pyenv/shims/python
+#!/Users/peter.vacca/.pyenv/shims/python
 
 import glob
+import os
 from utils import make_preds
 import pandas as pd
+import argparse
+pd.set_option('max_colwidth', 800)
 
-query='headsets'
-tags = ['pico',
- 'samsung',
- 'sony',
- 'valve']
-querys = [query for i in range(len(tags))]
+# Create argument parser
+parser = argparse.ArgumentParser(description='Parse a single argument')
 
-# for query,tag in zip(querys,tags):
-#     print(f"{query} - {tag}")
-#     make_preds(query,tag)
+# Add argument
+parser.add_argument('query', type=str, help='Query string to be saved')
 
+# Parse the arguments
+args = parser.parse_args()
+
+# Get the value of the 'query' argument and save it to a variable
+query = args.query
+directory = f"../data/{query}/"
+
+# Get all CSV files in the directory
+tags = [file[:-4] for file in os.listdir(directory) if file.endswith('.csv')]
+tags.sort()
+
+for tag in tags:
+    print(f"{query} - {tag}")
+    make_preds(query, tag)
 
 _predictions = glob.glob(f'../data/predictions/{query}/*')
 data = []

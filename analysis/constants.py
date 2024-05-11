@@ -10,4 +10,8 @@ category_tags =  ['amazon', 'apple', 'google', 'meta', 'microsoft']
 
 query_tags = {'glasses': glasses_tags, 'headsets': headset_tags, 'category': category_tags}
 
-sentiment_dict = {'negative':0,'neutral':1,'positive':2}
+sentiment_dict = {
+    'neutral': 0, 
+    'negative': -1,
+    'positive':1
+}

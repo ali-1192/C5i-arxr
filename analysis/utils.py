@@ -304,7 +304,7 @@ def load_in_data_manual_export(query):
     Returns:
     - df (pd.DataFrame): The dataframe containing the data for the query.
     """
-    dir1 = f'/Users/pvacca/git/project-google-arxr-analytics/data/{query}/*.csv'
+    dir1 = f'/Users/peter.vacca/git/project-google-arxr-analytics/data/{query}/*.csv'
     paths = glob.glob(dir1)
     data_list = []
     for path in paths:
@@ -317,7 +317,7 @@ def load_in_data_manual_export(query):
     return df
 
 def load_in_data_reddit(query):
-    dir2 = f'/Users/pvacca/git/project-google-arxr-analytics/data/reddit/{query}_*.json'
+    dir2 = f'/Users/peter.vacca/git/project-google-arxr-analytics/data/reddit/{query}_*.json'
     paths = glob.glob(dir2)
     data_list = []
     for path in paths:
@@ -356,7 +356,7 @@ def make_preds(query,tag):
     
     # Load in sampled data
     all_data, unique_text_data, excluded_uid_data, train_data, test_data = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
-    
+
     # Condition for sample 
     if len(train_data)>5000:
         train_data = train_data.sample(n=5000,random_state=42)
@@ -375,7 +375,7 @@ def make_preds(query,tag):
     print(all_results['llm_label'].value_counts()/len(all_results))
     
     # Save data
-    all_results.to_json(f'../data/predictions/{query}/{tag}.json',orient='records',lines=True)
+    all_results.to_json(f'../data/predictions/{query}/{tag}2.json',orient='records',lines=True)
     print('Complete')
 
 def make_preds_categories(query,tag):
@@ -469,7 +469,9 @@ def generate_prompt(query_type, tag):
     positive,negative,neutral in general.
     My life depends on getting the entity-specifc answer correct! 
     Again when labeling the sentiment label it under the condition of its SPECIFIC sentiment towards {tag.title()} {query_type}
-    \n Output: -negative -positive -neutral"""
+    Only reply with a single word, the sentiment label in the form: -NEGATIVE- -POSITIVE- -NEUTRAL-
+    Do not return any other information other than the sentiment label
+    Do not provide any explanation or reasoning for the sentiment label"""
     return prompt
 
 def generate_prompt_categories(tag):
