@@ -10,8 +10,8 @@ import google.cloud.aiplatform as aiplatform
 import google.generativeai as palm
 from vertexai.preview.generative_models import GenerativeModel, Part
 from vertexai.language_models import TextGenerationModel
-from langchain.llms import GooglePalm
-from langchain.llms import VertexAI
+from langchain_community.llms import GooglePalm
+from langchain_google_vertexai import VertexAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
@@ -223,7 +223,7 @@ class llm_component:
            """
         output_lower = output.lower()
         for label in self.labels:
-            if label in output_lower:
+            if f"-{label}-" in output_lower:
                 return {'label': label}
         if output_lower == '':
             return {'label': 'cannot_convert'}
@@ -313,7 +313,6 @@ class llm_component:
     """
         prompt = self.query + f""" Label the Text. \Text:'{text}' """
         try:
-
             output =  self.gemini.generate_content(prompt).text.replace('`','')
         except:
             output = ''
