@@ -1,10 +1,10 @@
 #!/Users/peter.vacca/.pyenv/shims/python
 
 import os
-from utils import make_preds, make_preds_categories
-import pandas as pd
 import sys
 import concurrent.futures
+from utils import make_preds, make_preds_categories
+import pandas as pd
 pd.set_option('max_colwidth', 800)
 
 # Get the query argument from the command line

@@ -1,9 +1,8 @@
 #!/Users/peter.vacca/.pyenv/shims/python
 
 import glob
-import os
-import pandas as pd
 from datetime import date
+import pandas as pd
 pd.set_option('max_colwidth', 800)
 
 today = date.today().strftime("%Y-%m-%d")
