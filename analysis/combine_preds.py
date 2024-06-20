@@ -18,7 +18,7 @@ def combine_preds(query):
     all_cat_preds.to_json(f'../data/predictions/final_preds/{query}.json',orient='records',lines=True)
 
 
-for query in ['headsets', 'categories', 'glasses']:
+for query in ['categories']:
     combine_preds(query)
 
 all_predictions = glob.glob('../data/predictions/final_preds/*')

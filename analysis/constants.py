@@ -15,3 +15,5 @@ sentiment_dict = {
     'negative': 0,
     'positive':2
 }
+
+SAMPLE_SIZE = 5000

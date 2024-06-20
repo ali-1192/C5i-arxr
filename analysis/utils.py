@@ -2,7 +2,7 @@ import glob
 import os
 import pandas as pd
 import numpy as np
-from constants import sentiment_dict
+from constants import sentiment_dict, SAMPLE_SIZE
 import ast
 from llm_label_flow import llm_component
 from sklearn.metrics import classification_report, matthews_corrcoef
@@ -358,8 +358,8 @@ def make_preds(query,tag):
     all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
 
     # Condition for sample 
-    if len(train_data)>5000:
-        train_data = train_data.sample(n=5000,random_state=42)
+    if len(train_data)>SAMPLE_SIZE:
+        train_data = train_data.sample(n=SAMPLE_SIZE,random_state=42)
         
     # Create prompt and make preds
     prompt = generate_prompt(query.title(), tag.title())
@@ -386,8 +386,8 @@ def make_preds_categories(query,tag):
     all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
     
     # Condition for sample 
-    if len(train_data)>5000:
-        train_data = train_data.sample(n=5000,random_state=42)
+    if len(train_data)>SAMPLE_SIZE:
+        train_data = train_data.sample(n=SAMPLE_SIZE,random_state=42)
         
     # Create prompt and make preds
     prompt = generate_prompt_categories(tag.title())
