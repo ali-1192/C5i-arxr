@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
 import glob
 import os
-from constants import sentiment_dict
+import pandas as pd
+import numpy as np
+from constants import sentiment_dict, SAMPLE_SIZE
+import ast
 from llm_label_flow import llm_component
 from sklearn.metrics import classification_report, matthews_corrcoef
 
@@ -83,8 +84,6 @@ def run_llm_label_flow_gemini(label_dict, query, labels, data, label_name='llm_l
         Returns:
         - df: The original dataframe with the LLM labels appended.
         """
-    print(f"Starting gemini for {query} and {labels}")
-
     df = data.copy()
     df_dict = {'uid': list(df['uid']), 'text': list(df['text'])}
     predictor = llm_component(query=query, api_type='vertex-api', labels=labels, rate_limit=10)
@@ -98,6 +97,7 @@ def run_llm_label_flow_gemini(label_dict, query, labels, data, label_name='llm_l
     df = df.loc[df['uid'].isin(set(results_df['uid']))].reset_index(drop=True)
     result_dict = {uid: label for uid, label in zip(results_df['uid'], results_df['label'])}
     df[f'{label_name}'] = df['uid'].apply(lambda x: result_dict[x])
+    print("end")
     return df
 
 def obtain_results_gemini_uid_dict(results):
@@ -304,7 +304,7 @@ def load_in_data_manual_export(query):
     Returns:
     - df (pd.DataFrame): The dataframe containing the data for the query.
     """
-    dir1 = f'/Users/peter.vacca/git/project-google-arxr-analytics/data/{query}/*.csv'
+    dir1 = f'../data/{query}/*.csv'
     paths = glob.glob(dir1)
     data_list = []
     for path in paths:
@@ -317,7 +317,7 @@ def load_in_data_manual_export(query):
     return df
 
 def load_in_data_reddit(query):
-    dir2 = f'/Users/peter.vacca/git/project-google-arxr-analytics/data/reddit/{query}_*.json'
+    dir2 = f'../data/reddit/{query}_*.json'
     paths = glob.glob(dir2)
     data_list = []
     for path in paths:
@@ -358,8 +358,8 @@ def make_preds(query,tag):
     all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
 
     # Condition for sample 
-    if len(train_data)>5000:
-        train_data = train_data.sample(n=5000,random_state=42)
+    if len(train_data)>SAMPLE_SIZE:
+        train_data = train_data.sample(n=SAMPLE_SIZE,random_state=42)
         
     # Create prompt and make preds
     prompt = generate_prompt(query.title(), tag.title())
@@ -386,8 +386,8 @@ def make_preds_categories(query,tag):
     all_data, _, excluded_uid_data, train_data, _ = grab_specific_tag_data_breakdown_test_and_train(main_query_data,tag)
     
     # Condition for sample 
-    if len(train_data)>5000:
-        train_data = train_data.sample(n=5000,random_state=42)
+    if len(train_data)>SAMPLE_SIZE:
+        train_data = train_data.sample(n=SAMPLE_SIZE,random_state=42)
         
     # Create prompt and make preds
     prompt = generate_prompt_categories(tag.title())
@@ -424,7 +424,10 @@ def grab_specific_tag_data_breakdown_test_and_train(df,tag):
     df = df.loc[df['tag']==tag].reset_index(drop=True)
     df_unique_snippets = df.drop_duplicates(subset=['text']).reset_index(drop=True)
     excluded_uid_from_unique = set(df['uid'])-set(df_unique_snippets['uid'])
-    df_test =  df_unique_snippets.sample(n=50,random_state=42).reset_index(drop=True)
+    sample_size = 50
+    if len(df_unique_snippets) < sample_size:
+        sample_size = len(df_unique_snippets)
+    df_test =  df_unique_snippets.sample(n=sample_size,random_state=42).reset_index(drop=True)
     df_test_uids = set(df_test['uid'])
     df_train =  df_unique_snippets.loc[~df_unique_snippets['uid'].isin(df_test_uids)].reset_index(drop=True)
     return df,df_unique_snippets,excluded_uid_from_unique, df_train, df_test
@@ -482,6 +485,8 @@ def generate_prompt_categories(tag):
     positive,negative,neutral in general.
     My life depends on getting the entity-specifc answer correct! 
     Again when labeling the sentiment label it under the condition of its SPECIFIC sentiment towards {tag.title()} {tag.title()} in the Augmented Reality (AR), Virtual Reality (VR), and Extended Reality (XR) field.
-    \n Output: -negative -positive -neutral"""
+    Only reply with a single word, the sentiment label in the form: -NEGATIVE- -POSITIVE- -NEUTRAL-
+    Do not return any other information other than the sentiment label
+    Do not provide any explanation or reasoning for the sentiment label"""
     return prompt
 

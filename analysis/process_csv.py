@@ -1,11 +1,12 @@
 #!/Users/peter.vacca/.pyenv/shims/python
 
 import os
-from utils import make_preds, make_preds_categories
-import pandas as pd
 import sys
 import concurrent.futures
+from utils import make_preds, make_preds_categories
+import pandas as pd
 pd.set_option('max_colwidth', 800)
+from pprint import pprint
 
 # Get the query argument from the command line
 query = sys.argv[1]
@@ -28,6 +29,7 @@ def get_tags(query):
     return tags
 
 tags = get_tags(query)
+results = []
 with concurrent.futures.ThreadPoolExecutor() as executor:
     futures = []
     method = make_preds
@@ -37,3 +39,5 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
         futures.append(executor.submit(method, query, tag))
     # Wait for all the tasks to complete
     concurrent.futures.wait(futures)
+    results = [future.result() for future in futures]
+pprint(results)
